@@ -3,7 +3,7 @@ An alternative to `boost::optional<T>` which does not store an additional `bool`
 but encodes the empty state inside `T` using a special indicated value.
 
 ## installation
-It is a single-header (header-only) library.
+It is a C++11 single-header (header-only) library.
 
 ## Usage
 
