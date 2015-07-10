@@ -48,7 +48,7 @@ struct empty_scalar_value : compact_optional_type<T>
 
 namespace detail_ {
 
-template <typename T, typename N>
+template <typename N>
 class compact_optional_base
 {
   typedef typename N::value_type value_type;
@@ -74,10 +74,10 @@ public:
 
 } // namespace detail_
 
-template <typename T, typename N, typename /* tag */ = default_tag>
-class compact_optional : public detail_::compact_optional_base<T, N>
+template <typename N, typename /* tag */ = default_tag>
+class compact_optional : public detail_::compact_optional_base<N>
 {
-  typedef detail_::compact_optional_base<T, N> super;
+  typedef detail_::compact_optional_base<N> super;
   
 public:
 
