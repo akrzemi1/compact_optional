@@ -17,7 +17,7 @@ void ignore(T&&) {}
 void test_value_ctor()
 {
   {
-    typedef compact_optional< int, empty_scalar_value<int, -1> > opt_int;
+    typedef compact_optional< empty_scalar_value<int, -1> > opt_int;
     static_assert (sizeof(opt_int) == sizeof(int), "size waste");
     
     opt_int oi_, oiN1(-1), oi0(0), oi1(1);
@@ -30,7 +30,7 @@ void test_value_ctor()
     assert (oi1.value() == 1);
   }
   {
-    typedef compact_optional< int, empty_scalar_value<int, 0> > opt_int;
+    typedef compact_optional< empty_scalar_value<int, 0> > opt_int;
     static_assert (sizeof(opt_int) == sizeof(int), "size waste");
     opt_int oi_, oiN1(-1), oi0(0), oi1(1);
     assert (!oi_.has_value());
@@ -51,7 +51,7 @@ struct string_empty_value : compact_optional_type<std::string>
 
 void test_string_traits()
 {
-  typedef compact_optional<std::string, string_empty_value, class tag_X> opt_str;
+  typedef compact_optional<string_empty_value, class tag_X> opt_str;
   static_assert (sizeof(opt_str) == sizeof(std::string), "size waste");
   
   opt_str os_, os00(std::string("\0\0", 2)), os0(std::string("\0")), osA(std::string("A"));
@@ -73,7 +73,7 @@ struct string_in_pair_empty_val : compact_optional_type< std::string, std::pair<
 
 void test_custom_storage()
 {
-  typedef compact_optional<std::string, string_in_pair_empty_val> opt_str;
+  typedef compact_optional<string_in_pair_empty_val> opt_str;
   opt_str os_, os0(std::string("\0")), osA(std::string("A"));
   
   assert (!os_.has_value());
