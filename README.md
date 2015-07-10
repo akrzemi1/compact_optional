@@ -11,7 +11,7 @@ Do you want to store a possibly missing `int`? Can you spare value `-1`? You can
 
 ```c++
 using namespace ak_toolbox;
-typedef compact_optional<int, empty_scalar_value<int, -1>> opt_int;
+typedef compact_optional<empty_scalar_value<int, -1>> opt_int;
 
 opt_int oi;
 opt_int o2 (2);
@@ -33,7 +33,7 @@ struct string_empty_value
   static bool is_empty_value(const std::string& v) { return v == std::string("\0\0", 2); }
 };
 
-typedef ak_toolbox::compact_optional<std::string, string_empty_value> opt_str;
+typedef ak_toolbox::compact_optional<string_empty_value> opt_str;
 opt_str os, oE(std::string(""));
 
 assert (!os.has_value());
