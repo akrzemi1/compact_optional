@@ -9,6 +9,10 @@
 #include <utility>
 #include <string>
 
+#if defined AK_TOOLBOX_USING_BOOST
+#include <boost/optional.hpp>
+#endif
+
 using namespace ak_toolbox;
 
 template <typename T>
@@ -91,9 +95,43 @@ void test_custom_storage()
   assert (!os0.has_value());
 }
 
+void test_bool_storage()
+{
+  typedef compact_optional<compact_bool> opt_bool;
+  static_assert (sizeof(opt_bool) == 1, "size waste");
+  
+  opt_bool ob_, obT(true), obF(false);
+  assert (!ob_.has_value());
+  
+  assert (obT.has_value());
+  assert (obT.value() == true);
+  
+  assert (obF.has_value());
+  assert (obF.value() == false);
+}
+
+#if defined AK_TOOLBOX_USING_BOOST
+void test_optional_as_storage()
+{
+  typedef compact_optional<compact_optional_from_optional<boost::optional<int>>> opt_int;
+  opt_int oi_, oiN1(-1), oi0(0);
+  assert (!oi_.has_value());
+  
+  assert (oiN1.has_value());
+  assert (oiN1.value() == -1);
+  
+  assert (oi0.has_value());
+  assert (oi0.value() == 0);
+}
+#endif
+
 int main()
 {
   test_value_ctor();
   test_string_traits();
   test_custom_storage();
+  test_bool_storage();
+#if defined AK_TOOLBOX_USING_BOOST
+  test_optional_as_storage();
+#endif
 }
