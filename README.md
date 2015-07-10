@@ -43,3 +43,14 @@ assert (oE.value() == "");
 static_assert (sizeof(opt_str) == sizeof(std::string), "");
 ```
 
+Cannot spare any value, but still want to use this interface? You can use `boost::opitonal` or `std::experimental::optional` at the cost of storage size:
+
+```c++
+typedef compact_optional<compact_optional_from_optional<boost::optional<int>>> opt_int;
+```
+
+We also provide a customization for optional `bool` with the size of a `char`:
+
+```c++
+typedef compact_optional<compact_bool> opt_bool;
+```
