@@ -28,8 +28,19 @@ namespace compact_optional_ns {
 
 struct default_tag{};
 
+template <typename T, typename NT = T>
+struct compact_optional_type
+{
+  typedef T value_type;
+  typedef NT storage_type;
+  
+  static AK_TOOLBOX_CONSTEXPR const value_type& access_value(const storage_type& v) { return v; }
+  static AK_TOOLBOX_CONSTEXPR const value_type& store_value(const value_type& v) { return v; }
+  static AK_TOOLBOX_CONSTEXPR value_type&& store_value(value_type&& v) { return std::move(v); }
+};
+
 template <typename T, T Val>
-struct empty_scalar_value
+struct empty_scalar_value : compact_optional_type<T>
 {
   static AK_TOOLBOX_CONSTEXPR T empty_value() { return Val; }
   static AK_TOOLBOX_CONSTEXPR bool is_empty_value(T v) { return v == Val; }
@@ -40,22 +51,25 @@ namespace detail_ {
 template <typename T, typename N>
 class compact_optional_base
 {
-  T value_;
+  typedef typename N::value_type value_type;
+  typedef typename N::storage_type storage_type;
+  
+protected:
+  storage_type value_;
 
 public:
-
-  AK_TOOLBOX_CONSTEXPR compact_optional_base() AK_TOOLBOX_NOEXCEPT_AS(T(N::empty_value()))
+  AK_TOOLBOX_CONSTEXPR compact_optional_base() AK_TOOLBOX_NOEXCEPT_AS(storage_type(N::empty_value()))
     : value_(N::empty_value()) {}
     
-  AK_TOOLBOX_CONSTEXPR compact_optional_base(const T& v)
-    : value_(v) {}
+  AK_TOOLBOX_CONSTEXPR compact_optional_base(const value_type& v)
+    : value_(N::store_value(v)) {}
     
-  AK_TOOLBOX_CONSTEXPR compact_optional_base(T&& v)
-    : value_(std::move(v)) {}
+  AK_TOOLBOX_CONSTEXPR compact_optional_base(value_type&& v)
+    : value_(N::store_value(std::move(v))) {}
     
   AK_TOOLBOX_CONSTEXPR bool has_value() const { return !N::is_empty_value(value_); }
   
-  AK_TOOLBOX_CONSTEXPR const T& value() const { return assert(has_value()), value_; }
+  AK_TOOLBOX_CONSTEXPR const value_type& value() const { return assert(has_value()), N::access_value(value_); }
 };
 
 } // namespace detail_
@@ -67,21 +81,30 @@ class compact_optional : public detail_::compact_optional_base<T, N>
   
 public:
 
-  AK_TOOLBOX_CONSTEXPR compact_optional() AK_TOOLBOX_NOEXCEPT_AS(T(N::empty_value()))
+  typedef typename N::value_type value_type;
+  typedef typename N::storage_type storage_type;
+
+  AK_TOOLBOX_CONSTEXPR compact_optional() AK_TOOLBOX_NOEXCEPT_AS(storage_type(N::empty_value()))
     : super() {}
     
-  AK_TOOLBOX_CONSTEXPR compact_optional(const T& v)
+  AK_TOOLBOX_CONSTEXPR compact_optional(const value_type& v)
     : super(v) {}
     
-  AK_TOOLBOX_CONSTEXPR compact_optional(T&& v)
+  AK_TOOLBOX_CONSTEXPR compact_optional(value_type&& v)
     : super(std::move(v)) {}
 
+  friend void swap(compact_optional& l, compact_optional&r)
+  {
+    using std::swap;
+    swap (l.value_, r.value_);
+  }
 };
 
 } // namespace compact_optional_ns
 
 using compact_optional_ns::compact_optional;
 using compact_optional_ns::empty_scalar_value;
+using compact_optional_ns::compact_optional_type;
 
 } // namespace ak_toolbox
 
