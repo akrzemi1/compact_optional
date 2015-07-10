@@ -27,7 +27,7 @@ Do you want to store a possibly missing `std::string`, where 'missing' != 'empty
 Can you spare some string value, like `std::string("\0\0", 2)`? This is how you do it:
 
 ```c++
-struct string_empty_value
+struct string_empty_value : ak_toolbox::compact_optional_type<std::string>
 {
   static std::string empty_value() { return std::string("\0\0", 2); }
   static bool is_empty_value(const std::string& v) { return v == std::string("\0\0", 2); }
