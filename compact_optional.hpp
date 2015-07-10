@@ -28,11 +28,12 @@ namespace compact_optional_ns {
 
 struct default_tag{};
 
-template <typename T, typename NT = T>
+template <typename T, typename NT = T, typename CREF = const T&>
 struct compact_optional_type
 {
   typedef T value_type;
   typedef NT storage_type;
+  typedef CREF reference_type;
   
   static AK_TOOLBOX_CONSTEXPR const value_type& access_value(const storage_type& v) { return v; }
   static AK_TOOLBOX_CONSTEXPR const value_type& store_value(const value_type& v) { return v; }
@@ -42,8 +43,31 @@ struct compact_optional_type
 template <typename T, T Val>
 struct empty_scalar_value : compact_optional_type<T>
 {
-  static AK_TOOLBOX_CONSTEXPR T empty_value() { return Val; }
+  static AK_TOOLBOX_CONSTEXPR T empty_value() AK_TOOLBOX_NOEXCEPT { return Val; }
   static AK_TOOLBOX_CONSTEXPR bool is_empty_value(T v) { return v == Val; }
+};
+
+template <typename OT>
+struct compact_optional_from_optional : compact_optional_type<typename OT::value_type, OT>
+{
+  typedef typename OT::value_type value_type;
+  typedef OT storage_type;
+
+  static OT empty_value() AK_TOOLBOX_NOEXCEPT { return OT(); }
+  static bool is_empty_value(const OT& v) { return !v; }
+  
+  static const value_type& access_value(const storage_type& v) { return *v; }
+  static storage_type store_value(const value_type& v) { return v; }
+  static storage_type store_value(value_type&& v) { return std::move(v); }
+};
+
+struct compact_bool : compact_optional_type<bool, char, bool>
+{
+  static AK_TOOLBOX_CONSTEXPR char empty_value() AK_TOOLBOX_NOEXCEPT { return char(2); }
+  static AK_TOOLBOX_CONSTEXPR bool is_empty_value(char v) { return v == 2; }
+  
+  static AK_TOOLBOX_CONSTEXPR bool access_value(const char& v) { return bool(v); }
+  static AK_TOOLBOX_CONSTEXPR char store_value(const bool& v) { return v; }
 };
 
 namespace detail_ {
@@ -51,10 +75,11 @@ namespace detail_ {
 template <typename N>
 class compact_optional_base
 {
+protected:
   typedef typename N::value_type value_type;
   typedef typename N::storage_type storage_type;
+  typedef typename N::reference_type reference_type;
   
-protected:
   storage_type value_;
 
 public:
@@ -69,7 +94,7 @@ public:
     
   AK_TOOLBOX_CONSTEXPR bool has_value() const { return !N::is_empty_value(value_); }
   
-  AK_TOOLBOX_CONSTEXPR const value_type& value() const { return assert(has_value()), N::access_value(value_); }
+  AK_TOOLBOX_CONSTEXPR reference_type value() const { return assert(has_value()), N::access_value(value_); }
 };
 
 } // namespace detail_
@@ -83,6 +108,7 @@ public:
 
   typedef typename N::value_type value_type;
   typedef typename N::storage_type storage_type;
+  typedef typename N::reference_type reference_type;
 
   AK_TOOLBOX_CONSTEXPR compact_optional() AK_TOOLBOX_NOEXCEPT_AS(storage_type(N::empty_value()))
     : super() {}
@@ -105,6 +131,8 @@ public:
 using compact_optional_ns::compact_optional;
 using compact_optional_ns::empty_scalar_value;
 using compact_optional_ns::compact_optional_type;
+using compact_optional_ns::compact_optional_from_optional;
+using compact_optional_ns::compact_bool;
 
 } // namespace ak_toolbox
 
