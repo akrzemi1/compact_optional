@@ -47,7 +47,7 @@ Cannot spare any value, but still want to use this interface? You can use `boost
 
 ```c++
 typedef compact_optional<compact_optional_from_optional<boost::optional<int>>> opt_int;
-tatic_assert (sizeof(opt_int) == sizeof(boost::optional<int>), "");
+static_assert (sizeof(opt_int) == sizeof(boost::optional<int>), "");
 ```
 
 We also provide a customization for optional `bool` with the size of a `char`:
