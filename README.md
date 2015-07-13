@@ -56,3 +56,7 @@ We also provide a customization for optional `bool` with the size of a `char`:
 typedef compact_optional<compact_bool> opt_bool;
 static_assert (sizeof(opt_bool) == 1, "");
 ```
+
+## Acknowledgemens
+
+The idea of encoding the policy for determining the empty state in a template parameter has been proposed by Vitali Lovich (see https://groups.google.com/a/isocpp.org/d/topic/std-proposals/46J1onhWJ-s/discussion).
