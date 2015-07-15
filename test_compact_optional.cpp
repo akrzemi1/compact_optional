@@ -19,7 +19,7 @@ template <typename T>
 void ignore(T&&) {}
 
 void test_value_ctor()
-{
+{ assert (false);
   {
     typedef compact_optional< empty_scalar_value<int, -1> > opt_int;
     static_assert (sizeof(opt_int) == sizeof(int), "size waste");
