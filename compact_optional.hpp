@@ -22,6 +22,21 @@
 #  define AK_TOOLBOX_NOEXCEPT_AS(E) noexcept(noexcept(E))
 #endif
 
+#if defined NDEBUG
+# define AK_TOOLBOX_ASSERTED_EXPRESSION(CHECK, EXPR) (EXPR)
+#else
+# define AK_TOOLBOX_ASSERTED_EXPRESSION(CHECK, EXPR) ((CHECK) ? (EXPR) : (fail(#CHECK, __FILE__, __LINE__), (EXPR)))
+  inline void fail(const char* expr, const char* file, unsigned line)
+  {
+  # if defined __clang__ || defined __GNU_LIBRARY__
+    __assert(expr, file, line);
+  # elif defined __GNUC__
+    _assert(expr, file, line);
+  # else
+  #   error UNSUPPORTED COMPILER
+  # endif
+  }
+#endif
 
 namespace ak_toolbox {
 namespace compact_optional_ns {
@@ -94,7 +109,7 @@ public:
     
   AK_TOOLBOX_CONSTEXPR bool has_value() const { return !N::is_empty_value(value_); }
   
-  AK_TOOLBOX_CONSTEXPR reference_type value() const { return (assert(has_value()), N::access_value(value_)); }
+  AK_TOOLBOX_CONSTEXPR reference_type value() const { return AK_TOOLBOX_ASSERTED_EXPRESSION(has_value(), N::access_value(value_)); }
 };
 
 } // namespace detail_
@@ -135,5 +150,7 @@ using compact_optional_ns::compact_optional_from_optional;
 using compact_optional_ns::compact_bool;
 
 } // namespace ak_toolbox
+
+#undef AK_TOOLBOX_ASSERTED_EXPRESSION
 
 #endif //AK_TOOLBOX_COMPACT_OPTIONAL_HEADER_GUARD_
