@@ -108,6 +108,7 @@ void test_bool_storage()
   
   assert (obF.has_value());
   assert (obF.value() == false);
+    assert (false); // testing travis
 }
 
 #if defined AK_TOOLBOX_USING_BOOST
@@ -122,8 +123,6 @@ void test_optional_as_storage()
   
   assert (oi0.has_value());
   assert (oi0.value() == 0);
-  assert (false); // testing travis
-  TESTING TRAVIS
 }
 #endif
 
