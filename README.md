@@ -60,3 +60,6 @@ static_assert (sizeof(opt_bool) == 1, "");
 ## Acknowledgemens
 
 The idea of encoding the policy for determining the empty state in a template parameter has been proposed by Vitali Lovich (see https://groups.google.com/a/isocpp.org/d/topic/std-proposals/46J1onhWJ-s/discussion).
+
+## License
+Distributed under the [Boost Software License, Version 1.0](http://www.boost.org/LICENSE_1_0.txt).
