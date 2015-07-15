@@ -1,4 +1,4 @@
-# compact_optional
+# compact_optional [![Build Status](https://travis-ci.org/akrzemi1/compact_optional.svg?branch=master)](https://travis-ci.org/akrzemi1/compact_optional)
 An alternative to `boost::optional<T>` which does not store an additional `bool` flag,
 but encodes the empty state inside `T` using a special indicated value.
 
