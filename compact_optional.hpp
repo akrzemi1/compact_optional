@@ -94,7 +94,7 @@ public:
     
   AK_TOOLBOX_CONSTEXPR bool has_value() const { return !N::is_empty_value(value_); }
   
-  AK_TOOLBOX_CONSTEXPR reference_type value() const { return assert(has_value()), N::access_value(value_); }
+  AK_TOOLBOX_CONSTEXPR reference_type value() const { return (assert(has_value()), N::access_value(value_)); }
 };
 
 } // namespace detail_
