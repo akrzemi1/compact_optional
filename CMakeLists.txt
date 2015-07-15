@@ -2,7 +2,7 @@ project(compact_optional)
 cmake_minimum_required(VERSION 2.6)
 enable_testing()
 
-set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra")
+set(CMAKE_CXX_FLAGS "-std=c++0x -Wall -Wextra")
 
 add_executable(test_compact_optional test_compact_optional.cpp)
 
