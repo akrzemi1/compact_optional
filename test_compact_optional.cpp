@@ -121,7 +121,7 @@ void test_optional_as_storage()
   assert (oiN1.value() == -1);
   
   assert (oi0.has_value());
-  assert (oi0.value() == 0);
+  assert (oi0.value() == 9990);
 }
 #endif
 
