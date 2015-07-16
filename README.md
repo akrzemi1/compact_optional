@@ -57,6 +57,8 @@ typedef compact_optional<compact_bool> opt_bool;
 static_assert (sizeof(opt_bool) == 1, "");
 ```
 
+For additional motivation and overview see this post: https://akrzemi1.wordpress.com/2015/07/15/efficient-optional-values/.
+
 ## Acknowledgemens
 
 The idea of encoding the policy for determining the empty state in a template parameter has been proposed by Vitali Lovich (see https://groups.google.com/a/isocpp.org/d/topic/std-proposals/46J1onhWJ-s/discussion).
