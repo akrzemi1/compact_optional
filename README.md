@@ -11,7 +11,7 @@ Do you want to store a possibly missing `int`? Can you spare value `-1`? You can
 
 ```c++
 using namespace ak_toolbox;
-typedef compact_optional<empty_scalar_value<int, -1>> opt_int;
+typedef compact_optional<evp_int<int, -1>> opt_int;
 
 opt_int oi;
 opt_int o2 (2);
@@ -46,14 +46,14 @@ static_assert (sizeof(opt_str) == sizeof(std::string), "");
 Cannot spare any value, but still want to use this interface? You can use `boost::opitonal` or `std::experimental::optional` at the cost of storage size:
 
 ```c++
-typedef compact_optional<compact_optional_from_optional<boost::optional<int>>> opt_int;
+typedef compact_optional<evp_optional<boost::optional<int>>> opt_int;
 static_assert (sizeof(opt_int) == sizeof(boost::optional<int>), "");
 ```
 
 We also provide a customization for optional `bool` with the size of a `char`:
 
 ```c++
-typedef compact_optional<compact_bool> opt_bool;
+typedef compact_optional<evp_bool> opt_bool;
 static_assert (sizeof(opt_bool) == 1, "");
 ```
 
