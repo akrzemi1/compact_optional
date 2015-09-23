@@ -173,6 +173,9 @@ using compact_optional_ns::empty_scalar_value;
 using compact_optional_ns::compact_optional_type;
 using compact_optional_ns::compact_optional_from_optional;
 using compact_optional_ns::compact_bool;
+using compact_optional_ns::evp_bool;
+using compact_optional_ns::evp_int;
+using compact_optional_ns::evp_optional;
 
 } // namespace ak_toolbox
 
