@@ -71,6 +71,21 @@ struct empty_scalar_value : compact_optional_type<T>
 };
 
 template <typename OT>
+struct evp_optional : compact_optional_type<typename OT::value_type, OT>
+{
+  typedef typename OT::value_type value_type;
+  typedef OT storage_type;
+
+  static OT empty_value() AK_TOOLBOX_NOEXCEPT { return OT(); }
+  static bool is_empty_value(const OT& v) { return !v; }
+  
+  static const value_type& access_value(const storage_type& v) { return *v; }
+  static storage_type store_value(const value_type& v) { return v; }
+  static storage_type store_value(value_type&& v) { return std::move(v); }
+};
+
+// for backwards compatibility only:
+template <typename OT>
 struct compact_optional_from_optional : compact_optional_type<typename OT::value_type, OT>
 {
   typedef typename OT::value_type value_type;
@@ -84,7 +99,7 @@ struct compact_optional_from_optional : compact_optional_type<typename OT::value
   static storage_type store_value(value_type&& v) { return std::move(v); }
 };
 
-struct compact_bool : compact_optional_type<bool, char, bool>
+struct evp_bool : compact_optional_type<bool, char, bool>
 {
   static AK_TOOLBOX_CONSTEXPR char empty_value() AK_TOOLBOX_NOEXCEPT { return char(2); }
   static AK_TOOLBOX_CONSTEXPR bool is_empty_value(char v) { return v == 2; }
@@ -92,6 +107,8 @@ struct compact_bool : compact_optional_type<bool, char, bool>
   static AK_TOOLBOX_CONSTEXPR bool access_value(const char& v) { return bool(v); }
   static AK_TOOLBOX_CONSTEXPR char store_value(const bool& v) { return v; }
 };
+
+typedef evp_bool compact_bool;
 
 namespace detail_ {
 
