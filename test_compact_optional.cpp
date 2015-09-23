@@ -110,6 +110,17 @@ void test_bool_storage()
   assert (obF.value() == false);
 }
 
+void test_unsafe_raw_value()
+{
+  typedef compact_optional< evp_int<int, -1> > opt_int;
+  opt_int oi_, oiN1(-1), oi0(0), oi1(1);
+  
+  assert ( oi_.unsafe_raw_value() == -1);
+  assert (oiN1.unsafe_raw_value() == -1);
+  assert ( oi0.unsafe_raw_value() ==  0);
+  assert ( oi1.unsafe_raw_value() ==  1);
+}
+
 #if defined AK_TOOLBOX_USING_BOOST
 void test_optional_as_storage()
 {
@@ -131,6 +142,7 @@ int main()
   test_string_traits();
   test_custom_storage();
   test_bool_storage();
+  test_unsafe_raw_value();
 #if defined AK_TOOLBOX_USING_BOOST
   test_optional_as_storage();
 #endif
