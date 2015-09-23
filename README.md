@@ -33,7 +33,7 @@ struct string_empty_value : ak_toolbox::compact_optional_type<std::string>
     return std::string("\0\0", 2);
   }
   static bool is_empty_value(const std::string& v) {
-    return s.compare(0, s.npos, "\0\0", 2) == 0;
+    return v.compare(0, v.npos, "\0\0", 2) == 0;
   }
 };
 
