@@ -29,8 +29,12 @@ Can you spare some string values that contain a null character inside, like `std
 ```c++
 struct string_empty_value : ak_toolbox::compact_optional_type<std::string>
 {
-  static std::string empty_value() { return std::string("\0\0", 2); }
-  static bool is_empty_value(const std::string& v) { return !v.empty() && v.front() == '\0'; }
+  static std::string empty_value() { 
+    return std::string("\0\0", 2);
+  }
+  static bool is_empty_value(const std::string& v) {
+    return s.compare(0, s.npos, "\0\0", 2) == 0;
+  }
 };
 
 typedef ak_toolbox::compact_optional<string_empty_value> opt_str;
