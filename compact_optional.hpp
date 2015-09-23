@@ -56,6 +56,14 @@ struct compact_optional_type
 };
 
 template <typename T, T Val>
+struct evp_int : compact_optional_type<T>
+{
+  static AK_TOOLBOX_CONSTEXPR T empty_value() AK_TOOLBOX_NOEXCEPT { return Val; }
+  static AK_TOOLBOX_CONSTEXPR bool is_empty_value(T v) { return v == Val; }
+};
+
+// for backward compatibility only:
+template <typename T, T Val>
 struct empty_scalar_value : compact_optional_type<T>
 {
   static AK_TOOLBOX_CONSTEXPR T empty_value() AK_TOOLBOX_NOEXCEPT { return Val; }
