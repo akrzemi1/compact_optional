@@ -21,7 +21,7 @@ void ignore(T&&) {}
 void test_value_ctor()
 {
   {
-    typedef compact_optional< empty_scalar_value<int, -1> > opt_int;
+    typedef compact_optional< evp_int<int, -1> > opt_int;
     static_assert (sizeof(opt_int) == sizeof(int), "size waste");
     
     opt_int oi_, oiN1(-1), oi0(0), oi1(1);
@@ -34,7 +34,7 @@ void test_value_ctor()
     assert (oi1.value() == 1);
   }
   {
-    typedef compact_optional< empty_scalar_value<int, 0> > opt_int;
+    typedef compact_optional< evp_int<int, 0> > opt_int;
     static_assert (sizeof(opt_int) == sizeof(int), "size waste");
     opt_int oi_, oiN1(-1), oi0(0), oi1(1);
     assert (!oi_.has_value());
@@ -97,7 +97,7 @@ void test_custom_storage()
 
 void test_bool_storage()
 {
-  typedef compact_optional<compact_bool> opt_bool;
+  typedef compact_optional<evp_bool> opt_bool;
   static_assert (sizeof(opt_bool) == 1, "size waste");
   
   opt_bool ob_, obT(true), obF(false);
@@ -113,7 +113,7 @@ void test_bool_storage()
 #if defined AK_TOOLBOX_USING_BOOST
 void test_optional_as_storage()
 {
-  typedef compact_optional<compact_optional_from_optional<boost::optional<int>>> opt_int;
+  typedef compact_optional<evp_optional<boost::optional<int>>> opt_int;
   opt_int oi_, oiN1(-1), oi0(0);
   assert (!oi_.has_value());
   
