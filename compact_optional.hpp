@@ -9,6 +9,7 @@
 
 #include <cassert>
 #include <utility>
+#include <limits>
 
 #if defined AK_TOOLBOX_NO_ARVANCED_CXX11
 #  define AK_TOOLBOX_NOEXCEPT
@@ -68,6 +69,20 @@ struct empty_scalar_value : compact_optional_type<T>
 {
   static AK_TOOLBOX_CONSTEXPR T empty_value() AK_TOOLBOX_NOEXCEPT { return Val; }
   static AK_TOOLBOX_CONSTEXPR bool is_empty_value(T v) { return v == Val; }
+};
+
+template <typename FPT>
+struct evp_fp_nan : compact_optional_type<FPT>
+{
+  static AK_TOOLBOX_CONSTEXPR FPT empty_value() AK_TOOLBOX_NOEXCEPT { return std::numeric_limits<FPT>::quiet_NaN(); }
+  static AK_TOOLBOX_CONSTEXPR bool is_empty_value(FPT v) { return v != v; }
+};
+
+template <typename T> // requires Regular<T>
+struct evp_value_init : compact_optional_type<T>
+{
+  static AK_TOOLBOX_CONSTEXPR T empty_value() AK_TOOLBOX_NOEXCEPT { return T(); }
+  static AK_TOOLBOX_CONSTEXPR bool is_empty_value(const T& v) { return v == T(); }
 };
 
 template <typename OT>
@@ -177,6 +192,8 @@ using compact_optional_ns::compact_optional_from_optional;
 using compact_optional_ns::compact_bool;
 using compact_optional_ns::evp_bool;
 using compact_optional_ns::evp_int;
+using compact_optional_ns::evp_fp_nan;
+using compact_optional_ns::evp_value_init;
 using compact_optional_ns::evp_optional;
 
 } // namespace ak_toolbox
