@@ -121,6 +121,59 @@ void test_unsafe_raw_value()
   assert ( oi1.unsafe_raw_value() ==  1);
 }
 
+void test_evp_fp_nan()
+{
+  typedef compact_optional<evp_fp_nan<double>> opt_double;
+  opt_double o_, o1 (1.0), oNan (0.0/0.0);
+  assert (!o_.has_value());
+  assert ( o1.has_value());
+  assert (!oNan.has_value());
+  
+  assert (o1.value() == 1.0);
+  
+  double v = o_.unsafe_raw_value();
+  assert (v != v);
+  
+  v = o1.unsafe_raw_value();
+  assert (v == 1.0);
+  assert (v == v);
+  
+  v = oNan.unsafe_raw_value();
+  assert (v != v);
+}
+
+void test_evp_value_init()
+{
+  {
+    typedef compact_optional<evp_value_init<int>> opt_t;
+    opt_t o_, o1 (1), oE(0);
+    
+    assert (!o_.has_value());
+    assert ( o1.has_value());
+    assert (!oE.has_value());
+    
+    assert (o1.value() == 1);
+    
+    assert (o_.unsafe_raw_value() == 0);
+    assert (o1.unsafe_raw_value() == 1);
+    assert (oE.unsafe_raw_value() == 0);
+  }
+  {
+    typedef compact_optional<evp_value_init<std::string>> opt_t;
+    opt_t o_, o1 (std::string("one")), oE ((std::string()));
+    
+    assert (!o_.has_value());
+    assert ( o1.has_value());
+    assert (!oE.has_value());
+    
+    assert (o1.value() == "one");
+    
+    assert (o_.unsafe_raw_value() == "");
+    assert (o1.unsafe_raw_value() == "one");
+    assert (oE.unsafe_raw_value() == "");
+  }
+}
+
 #if defined AK_TOOLBOX_USING_BOOST
 void test_optional_as_storage()
 {
@@ -143,6 +196,8 @@ int main()
   test_custom_storage();
   test_bool_storage();
   test_unsafe_raw_value();
+  test_evp_fp_nan();
+  test_evp_value_init();
 #if defined AK_TOOLBOX_USING_BOOST
   test_optional_as_storage();
 #endif
