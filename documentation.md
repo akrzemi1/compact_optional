@@ -77,6 +77,26 @@ Can be used with all types that can be used as template non-type parameters, inc
 
 `EV` is the value the empty value representation.
 
+### evp_fp_nan
+
+```c++
+template <typename FPT> struct evp_fp_nan;
+```
+
+A policy for floating-point types, where the empty value is encoded as quiet NaN.
+
+`FPT` Needs to be a floating-point scalar type.
+
+### evp_value_init
+
+```c++
+template <typename T> struct evp_value_init;
+```
+
+A policy for storing any `Regular` type, the empty value is represented by a value-initialized `T`.
+
+`T` Must meet the requirements of `Regular`: be default constructible, copyable, moveable, and `EqualityComparable`.
+
 ### evp_bool
 
 ```c++
