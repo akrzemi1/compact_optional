@@ -13,3 +13,46 @@ In order to create an optional object type for your type `T`, you first need to 
 compact_optional<evp_int<int, -1>> oi; // optional int
 static_assert(sizeof(oi) == sizeof(int), "no size penalty");
 ```
+
+Instances of `compact_optional` have a very small interface. They are copyable and movable. The default constructor initializes an object with the value indicated by the empty-value policy. Another explicit constructor takes the value of `T`:
+
+```c++
+using opt_int = compact_optional<evp_int<int, -1>>;
+opt_int oi;      // internal value initialized to -1 (as per policy)
+opt_int o1 {0};  // internal value initialized to 0
+opt_int oN {-1}; // internal value initialized to -1
+```
+
+There are also three observer functions:
+* `has_value` that checks if the currently stored value is that indicated in the empty-value policy (EVP); 
+* `value` that extracts the stored value, with the precondition that the value is different than the one indicated in (EVP);
+* `unsafe_raw_value` that extracts the value as stored internally, with no precondition.
+
+```c++
+// continuing the previous example
+assert (!oi.has_value());
+assert ( o0.has_value());
+assert (!oN.has_value());
+
+assert (o0.value() == 0);
+// oi.value() is UB
+// oN.value() is UB
+
+assert (oi.unsafe_raw_value() == -1);
+assert (o0.unsafe_raw_value() ==  0);
+assert (o0.unsafe_raw_value() == -1);
+```
+
+As you can see, there are two ways to set the special empty value: either by default construction, or by providing it explicitly.
+
+There are no relational operations provided, as it is not obvious how a no-value should compare against other values.
+If you want to compare them, you need to provide a custom comparator, where you explicitly state how the empty state is treated.
+
+There is no way to 'reset' the optional object other than to move-assign a new value:
+
+```c++
+// continuing the previous example
+o0 = {};         // reset to empty value
+oN = opt_int{2}; // new value
+```
+
