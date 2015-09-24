@@ -56,3 +56,57 @@ o0 = {};         // reset to empty value
 oN = opt_int{2}; // new value
 ```
 
+Each instance of `compact_optional` also provides three nested types:
+* `value_type` - value we want to represent,
+* `reference_type` - what function `value` returns: in most cases it is `const value_type&`,
+* `storage_type` - type of the value that is used for storage: in most of the cases it is same as `value_type`.
+
+## Empty-value policies
+
+The library comes with a number of ready-to-use policies:
+
+### evp_int
+
+```c++
+template <typename Integral, Integral EV> struct evp_int;
+```
+
+Can be used with all types that can be used as template non-type parameters, including built-in integral arithmetic types and pointers.
+
+`Integral` represents the stored type.
+
+`EV` is the value the empty value representation.
+
+### evp_bool
+
+```c++
+struct evp_bool;
+```
+
+This is the policy for storing an optional `bool` in a compact way, such that the size of `compact_optional<evp_bool>` is 1.
+
+### evp_optional
+
+```c++
+template <typename Optional> struct evp_optional;
+```
+
+This policy is used for types that cannot (or do not want to) spare any value to indicate the empty state. We logically represent optional `T`, but store it in `boost::optional<T>` or `std::experimental::optional<T>`.
+
+`Optional` must be an instance of either `boost::optional` or `std::experimental::optional`.
+
+
+## Type-altering tag
+
+It is possible to pass a second type parameter to class template `compact_optional`.
+Such a type does not need to be complete. It is used as a 'tag' to trigger different
+instantiations of template `compact_optional` with the same empty-value policy:
+
+```c++
+using Count = compact_optional<evp_int<int, -1>, class count_tag>;
+using Num   = compact_optional<evp_int<int, -1>, class num_tag>;
+
+static_assert(!std::is_same<Count, Num>::value, "different types");
+```
+
+This behaves similarly to 'opaque typedef' feature: we get identical interface and behaviour, but two distinct non-interchangeable types.
