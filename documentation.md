@@ -45,6 +45,8 @@ assert (o0.unsafe_raw_value() == -1);
 
 As you can see, there are two ways to set the special empty value: either by default construction, or by providing it explicitly.
 
+It is not possible to change the stored value through function `value()`: it returns a non-mutable reference or value (based on the policy).
+
 There are no relational operations provided, as it is not obvious how a no-value should compare against other values.
 If you want to compare them, you need to provide a custom comparator, where you explicitly state how the empty state is treated.
 
@@ -63,7 +65,7 @@ Each instance of `compact_optional` also provides three nested types:
 
 ## Empty-value policies
 
-The library comes with a number of ready-to-use policies:
+What type is being stored and how the empty value is encoded is controlled by _empty-value policy_. You can either define your own, or use one of the policies provided with this library:
 
 ### evp_int
 
@@ -115,6 +117,48 @@ This policy is used for types that cannot (or do not want to) spare any value to
 
 `Optional` must be an instance of either `boost::optional` or `std::experimental::optional`.
 
+### Defining a custom empty-value policy
+
+In order to provide a custom empty-value policy to store a given type `T`, we need to provide a class that derive it from `compact_optional_type<T>` and implements two static member functions: `empty_value` and `is_empty_value`:
+
+```c++
+struct evp_string_with_0s : compact_optional_type<std::string>
+{
+  static storage_type empty_value() { 
+    return std::string("\0\0", 2);
+  }
+  static bool is_empty_value(const storage_type& v) {
+    return v.compare(0, v.npos, "\0\0", 2) == 0;
+  }
+};
+```
+
+Base class `compact_optional_type<T>` defines all the necessary nested types and some house-keeping functions. With it, we are declaring what type we will be storing.
+
+Function `empty_value` returns a value of the stored type (`storage_type`) that represents the empty value.
+
+Function `is_empty_value` returns true iff the the given value is recognized as the empty value.
+
+In a less likely case where we want to store the represent an optional value of type `T`, but store it internally in a different type, we need to provide more arguments to `compact_optional_type<T>`. Suppose we want to implement the policy for storing type `bool` in a storage of size 1 (the same way that `evp_bool` does). We need three states: no-value, `true`, and `false`. We cannot store it in type `bool` because it only has two states. So, for storage we will use type `char`. We will use value `2` (`'\2'`) to represent the empty state, value `0` to represent value `false` and `1` to represent `true`. Now, apart from defining how the empty state is encodes, we also need to provide a recipe on how to encode a `bool` in a `char`, and how to extract the `bool` value from `char` storage. We need to define additional two static member functions: `access_value` and `store_value`:
+
+```c++
+struct compact_bool_policy : compact_optional_type<bool, char, bool> // see below
+{
+  static storage_type empty_value() { return char(2); }
+  static bool is_empty_value(storage_type v) { return v == 2; }
+  
+  static reference_type access_value(const storage_type& v) { return bool(v); }
+  static storage_type store_value(const value_type& v) { return v; }
+};
+```
+
+The three types passed to `compact_optional_type` denote respectively:
+
+1. `value_type` -- the type we are modelling.
+2. `storage_type` -- the type we use to store the values internally.
+3. `reference_type` -- what type function `value` should return.
+
+because function `value()` should return a `bool`  and we are storing no `bool` we have to create a temporary value, and return it by value: therefore type `reference_type` is not really a reference.
 
 ## Type-altering tag
 
