@@ -174,3 +174,33 @@ static_assert(!std::is_same<Count, Num>::value, "different types");
 ```
 
 This behaves similarly to 'opaque typedef' feature: we get identical interface and behaviour, but two distinct non-interchangeable types.
+
+
+## Comparison with Boost.Optional
+
+This library is not a replacement for [`boost::optional`](http://www.boost.org/doc/libs/1_59_0/libs/optional/doc/html/index.html). While there is some overlap, both libraries target different use cases.
+
+### Genericity
+
+`boost::optional` is really generic: It will work practically with any `T`, to the extent that you can use `optional<optional<T>>`. You just give the type `T` and you get the optional object wrapper. In contrast, in `compact_optional` from the outset you have to make a choice case-by-case how you want to store the `empty` value `T`. The policy for managing the empty state is part of the contract, part of semantics, part of the type. Having a nested `compact_optional` is technically possible, but requires sparing two values of `T`.
+
+Some type `T` may not have a 'spare' value to indicate the empty state. In such case, `compact_optional` cannot help you. In contrast, `boost::optional<T>` will work just fine: the additional empty state is stored separately. In a way, `boost::optional<T>` can be thought as [`boost::variant`](http://www.boost.org/doc/libs/1_59_0/doc/html/variant.html)`<boost::none_t, T>`.
+
+### Life-time management
+
+`boost::optional<T>` gives you a useful guarantee that if you initialize it to a no-value state, no object of type `T` is created. This is useful for run-time performance reasons and allows a two phase initialization. In contrast, `compact_optional` upon construction, immediately constructs a `T`. `compact_optional` simply contains `T` as subobject. In contrast, `boost::optional` only provides a storage for `T` and creates and destroys the contained object as needed.
+
+### No container-like semantics
+
+`boost::optional<T>` is almost a container, capable of storing 0 or 1 elements. When it stores one element, you can alter its value. It is impossible in `compact_optional`: its value and the "container's size" are one thing. But in exchange, the latter, because it only provides a non-mutable access to the contained value, it can build the return value on the fly, similarly to the proxy reference in `std::vector<bool>`, but because we only provide a non-mutable reference, it is much simpler and safer. This is why we can provide a compact_optional for type `bool` (which has no spare value) with the `sizeof` of a single `char`.
+
+### Expressiveness vs non-ambiguity
+
+`compact_optional` has a minimalistic interface: this is also to avoid any surprises. As a cost it is less expressive and convenient. There are no implicit conversions, no overloaded operators; unlike `boost::optional`, it does not have `operator==`: you have to provide your own comparator and decide yourself how you want to compare the no-value states.
+
+
+## Intended use
+
+In general, it is expected that in the first pass of the implementation of your program, you will use `boost::optional<T>` as a simple ready-to-use solution. Later, if you determine that `boost::optional` kills your performance, you can think of replacing it with `compact_optional` and how you want to represent the no-value state.
+
+another use case is when you are currently using objects of scalar types with encoded special values (like type `std::string::size_type` with value `std::string::npos`) and you want to change it into something safer but be sure you are adding no runtime overhead. You can change your type to `compact_optional<evp_int<string::size_type, string::npos>>`.
