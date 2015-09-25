@@ -81,7 +81,7 @@ struct evp_fp_nan : compact_optional_type<FPT>
 template <typename T> // requires Regular<T>
 struct evp_value_init : compact_optional_type<T>
 {
-  static AK_TOOLBOX_CONSTEXPR T empty_value() AK_TOOLBOX_NOEXCEPT { return T(); }
+  static AK_TOOLBOX_CONSTEXPR T empty_value() AK_TOOLBOX_NOEXCEPT_AS(T()) { return T(); }
   static AK_TOOLBOX_CONSTEXPR bool is_empty_value(const T& v) { return v == T(); }
 };
 
