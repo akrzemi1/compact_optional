@@ -10,6 +10,7 @@
 #include <cassert>
 #include <utility>
 #include <limits>
+#include <new>
 
 #if defined AK_TOOLBOX_NO_ARVANCED_CXX11
 #  define AK_TOOLBOX_NOEXCEPT
@@ -21,6 +22,8 @@
 #  define AK_TOOLBOX_CONSTEXPR constexpr 
 #  define AK_TOOLBOX_EXPLICIT_CONV explicit 
 #  define AK_TOOLBOX_NOEXCEPT_AS(E) noexcept(noexcept(E))
+#  define AK_TOOLBOX_CONSTEXPR_NOCONST // fix in the future
+#  include <type_traits>
 #endif
 
 #if defined NDEBUG
@@ -85,6 +88,13 @@ struct evp_value_init : compact_optional_type<T>
   static AK_TOOLBOX_CONSTEXPR bool is_empty_value(const T& v) { return v == T(); }
 };
 
+template <typename T>
+struct evp_stl_empty : compact_optional_type<T>
+{
+  static AK_TOOLBOX_CONSTEXPR T empty_value() AK_TOOLBOX_NOEXCEPT_AS(T()) { return T(); }
+  static AK_TOOLBOX_CONSTEXPR bool is_empty_value(const T& v) { return v.empty(); }
+};
+
 template <typename OT>
 struct evp_optional : compact_optional_type<typename OT::value_type, OT>
 {
@@ -125,33 +135,201 @@ struct evp_bool : compact_optional_type<bool, char, bool>
 
 typedef evp_bool compact_bool;
 
+#ifndef AK_TOOLBOX_NO_ARVANCED_CXX11
+
+
+
+
+template <typename T>
+struct raw_storage_customization_point
+{
+};
+
+template <typename T>
+struct evp_raw_storage : compact_optional_type<T, typename std::aligned_storage<sizeof(T), alignof(T)>::type>
+{
+  typedef compact_optional_type<T, typename std::aligned_storage<sizeof(T), alignof(T)>::type> base;
+  typedef typename base::value_type value_type;
+  typedef typename base::storage_type storage_type;
+  
+  static storage_type empty_value() { return raw_storage_customization_point<T>::empty_value(); }
+  static bool is_empty_value(const storage_type& v) { return raw_storage_customization_point<T>::is_empty_value(v); }
+  
+  static const value_type& access_value(const storage_type& s) { return reinterpret_cast<const value_type&>(s); }
+  static const storage_type& store_value(const value_type& v) { return reinterpret_cast<const storage_type&>(v); }
+};
+
+#else
+
+template <typename T>
+struct evp_raw_storage 
+{
+};
+
+#endif // AK_TOOLBOX_NO_ARVANCED_CXX11
+
 namespace detail_ {
 
-template <typename N>
-class compact_optional_base
+
+template <typename EVP>
+struct member_storage
 {
+  typedef typename EVP::value_type value_type;
+  typedef typename EVP::storage_type storage_type;
+  typedef typename EVP::reference_type reference_type;
+  
+  storage_type value_;
+  
+  AK_TOOLBOX_CONSTEXPR member_storage() AK_TOOLBOX_NOEXCEPT_AS(storage_type(EVP::empty_value()))
+    : value_(EVP::empty_value()) {}
+    
+  AK_TOOLBOX_CONSTEXPR member_storage(const value_type& v)
+    : value_(EVP::store_value(v)) {}
+    
+  AK_TOOLBOX_CONSTEXPR member_storage(value_type&& v)
+    : value_(EVP::store_value(std::move(v))) {}
+};
+
+template <typename EVP>
+struct buffer_storage
+{
+  typedef typename EVP::value_type value_type;
+  typedef typename EVP::storage_type storage_type;
+  typedef typename EVP::reference_type reference_type;
+  
+  storage_type value_;
+  
+private:
+  void* address() { return static_cast<void*>(std::addressof(value_)); }
+  void construct(const value_type& v) { ::new (address()) value_type(v); }
+  void construct(value_type&& v) { ::new (address()) value_type(std::move(v)); }
+  void call_destructor() { as_value_type().value_type::~value_type(); }
+  void destroy() { call_destructor(); value_ = EVP::empty_value(); } // TODO: "fill_empty_value_pattern"
+  bool has_value() const { return !EVP::is_empty_value(value_); }
+  value_type& as_value_type() { return reinterpret_cast<value_type&>(value_); }
+  const value_type& as_value_type() const { return reinterpret_cast<const value_type&>(value_); }
+  
+public:
+  buffer_storage() AK_TOOLBOX_NOEXCEPT_AS(storage_type(EVP::empty_value()))
+    : value_(EVP::empty_value()) {}
+    
+  buffer_storage(const value_type& v) : value_(EVP::empty_value())
+    { construct(v); }
+    
+  buffer_storage(value_type&& v) : value_(EVP::empty_value())
+    { construct(std::move(v)); }
+    
+  buffer_storage(const buffer_storage& rhs) : value_(EVP::empty_value())
+    {
+      if (rhs.has_value())
+        construct(rhs.as_value_type());
+    }
+    
+  buffer_storage(buffer_storage&& rhs) : value_(EVP::empty_value())
+    {
+      if (rhs.has_value())
+        construct(std::move(rhs.as_value_type())); // TODO: add move
+    }
+    
+  void operator=(const buffer_storage& rhs)
+    {
+      if (has_value() && rhs.has_value())
+      {
+        as_value_type() = rhs.as_value_type();
+      }
+      else if (has_value() && !rhs.has_value())
+      {
+        destroy();
+      }
+      else if (!has_value() && rhs.has_value())
+      {
+        construct(rhs.as_value_type());
+      }
+    }
+    
+  void operator=(buffer_storage&& rhs)
+    {
+      if (has_value() && rhs.has_value())
+      {
+        as_value_type() = std::move(rhs.as_value_type());
+      }
+      else if (has_value() && !rhs.has_value())
+      {
+        destroy();
+      }
+      else if (!has_value() && rhs.has_value())
+      {
+        construct(std::move(rhs.as_value_type()));
+      }
+    }
+    
+  void swap(buffer_storage& rhs)
+  {
+    using namespace std;
+    if (has_value() && rhs.has_value())
+    {
+      swap(as_value_type(), rhs.as_value_type());
+    }
+    else if (has_value() && !rhs.has_value())
+    {
+      rhs.construct(std::move(as_value_type()));
+      destroy();
+    }
+    else if (!has_value() && rhs.has_value())
+    {
+      construct(std::move(rhs.as_value_type()));
+      rhs.destroy();
+    }
+  }
+    
+  ~buffer_storage()
+  {
+    if (has_value())
+      call_destructor();
+  }
+  // TODO: implement moves and copies, swap, dtor
+};
+
+template <typename T>
+struct storage_destruction
+{
+  typedef member_storage<T> type;
+};
+
+template <typename U>
+struct storage_destruction<evp_raw_storage<U>>
+{
+  typedef buffer_storage<evp_raw_storage<U>> type;
+};
+
+
+template <typename N>
+class compact_optional_base : storage_destruction<N>::type
+{
+  typedef typename storage_destruction<N>::type base;
+  
 protected:
   typedef typename N::value_type value_type;
   typedef typename N::storage_type storage_type;
   typedef typename N::reference_type reference_type;
   
-  storage_type value_;
-
+  AK_TOOLBOX_CONSTEXPR_NOCONST storage_type& raw_value() { return base::value_; }
+  
 public:
-  AK_TOOLBOX_CONSTEXPR compact_optional_base() AK_TOOLBOX_NOEXCEPT_AS(storage_type(N::empty_value()))
-    : value_(N::empty_value()) {}
+  AK_TOOLBOX_CONSTEXPR compact_optional_base() AK_TOOLBOX_NOEXCEPT_AS(base())
+    : base() {}
     
   AK_TOOLBOX_CONSTEXPR compact_optional_base(const value_type& v)
-    : value_(N::store_value(v)) {}
+    : base(v) {}
     
   AK_TOOLBOX_CONSTEXPR compact_optional_base(value_type&& v)
-    : value_(N::store_value(std::move(v))) {}
+    : base(std::move(v)) {}
     
-  AK_TOOLBOX_CONSTEXPR bool has_value() const { return !N::is_empty_value(value_); }
+  AK_TOOLBOX_CONSTEXPR bool has_value() const { return !N::is_empty_value(base::value_); }
   
-  AK_TOOLBOX_CONSTEXPR reference_type value() const { return AK_TOOLBOX_ASSERTED_EXPRESSION(has_value(), N::access_value(value_)); }
+  AK_TOOLBOX_CONSTEXPR reference_type value() const { return AK_TOOLBOX_ASSERTED_EXPRESSION(has_value(), N::access_value(base::value_)); }
   
-  AK_TOOLBOX_CONSTEXPR storage_type const& unsafe_raw_value() const { return value_; }
+  AK_TOOLBOX_CONSTEXPR storage_type const& unsafe_raw_value() const { return base::value_; }
 };
 
 } // namespace detail_
@@ -179,7 +357,7 @@ public:
   friend void swap(compact_optional& l, compact_optional&r)
   {
     using std::swap;
-    swap (l.value_, r.value_);
+    swap (l.raw_value(), r.raw_value());
   }
 };
 
@@ -195,6 +373,9 @@ using compact_optional_ns::evp_int;
 using compact_optional_ns::evp_fp_nan;
 using compact_optional_ns::evp_value_init;
 using compact_optional_ns::evp_optional;
+using compact_optional_ns::evp_stl_empty;
+using compact_optional_ns::evp_raw_storage;
+
 
 } // namespace ak_toolbox
 
