@@ -283,7 +283,7 @@ struct evp_minutes_since_midnight : compact_optional_type< minutes_since_midnigh
 };
 
 
-struct evp_minutes : compact_optional_raw_storage_type<minutes_since_midnight, int>
+struct evp_minutes : compact_optional_pod_storage_type<minutes_since_midnight, int>
 {
   static storage_type empty_value() { return -1; }
   static bool is_empty_value(const storage_type& v) { return v == -1; }
