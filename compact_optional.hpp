@@ -28,18 +28,20 @@
 
 #if defined NDEBUG
 # define AK_TOOLBOX_ASSERTED_EXPRESSION(CHECK, EXPR) (EXPR)
-#else
+#elif defined __clang__ || defined __GNU_LIBRARY__
+# define AK_TOOLBOX_ASSERTED_EXPRESSION(CHECK, EXPR) ((CHECK) ? (EXPR) : (fail(#CHECK, __FILE__, __LINE__), (EXPR)))
+  inline void fail(const char* expr, const char* file, int line)
+  {
+    __assert(expr, file, line);
+  }
+#elif defined __GNUC__
 # define AK_TOOLBOX_ASSERTED_EXPRESSION(CHECK, EXPR) ((CHECK) ? (EXPR) : (fail(#CHECK, __FILE__, __LINE__), (EXPR)))
   inline void fail(const char* expr, const char* file, unsigned line)
   {
-  # if defined __clang__ || defined __GNU_LIBRARY__
-    __assert(expr, file, line);
-  # elif defined __GNUC__
     _assert(expr, file, line);
-  # else
-  #   error UNSUPPORTED COMPILER
-  # endif
   }
+#else
+# error UNSUPPORTED COMPILER
 #endif
 
 namespace ak_toolbox {
@@ -135,38 +137,26 @@ struct evp_bool : compact_optional_type<bool, char, bool>
 
 typedef evp_bool compact_bool;
 
+
+struct compact_optional_raw_storage_type_tag{};
+
 #ifndef AK_TOOLBOX_NO_ARVANCED_CXX11
+template <typename T, typename S = typename std::aligned_storage<sizeof(T), alignof(T)>::type>
+#else
+template <typename T, typename S>
+#endif // AK_TOOLBOX_NO_ARVANCED_CXX11
 
-
-
-
-template <typename T>
-struct raw_storage_customization_point
+struct compact_optional_raw_storage_type : compact_optional_raw_storage_type_tag
 {
-};
-
-template <typename T>
-struct evp_raw_storage : compact_optional_type<T, typename std::aligned_storage<sizeof(T), alignof(T)>::type>
-{
-  typedef compact_optional_type<T, typename std::aligned_storage<sizeof(T), alignof(T)>::type> base;
-  typedef typename base::value_type value_type;
-  typedef typename base::storage_type storage_type;
-  
-  static storage_type empty_value() { return raw_storage_customization_point<T>::empty_value(); }
-  static bool is_empty_value(const storage_type& v) { return raw_storage_customization_point<T>::is_empty_value(v); }
+  typedef T value_type;
+  typedef S storage_type;
+  typedef const T& reference_type;
   
   static const value_type& access_value(const storage_type& s) { return reinterpret_cast<const value_type&>(s); }
-  static const storage_type& store_value(const value_type& v) { return reinterpret_cast<const storage_type&>(v); }
+  static const storage_type& store_value(const value_type& v) { return reinterpret_cast<const storage_type&>(v); }  
 };
 
-#else
 
-template <typename T>
-struct evp_raw_storage 
-{
-};
-
-#endif // AK_TOOLBOX_NO_ARVANCED_CXX11
 
 namespace detail_ {
 
@@ -188,6 +178,12 @@ struct member_storage
     
   AK_TOOLBOX_CONSTEXPR member_storage(value_type&& v)
     : value_(EVP::store_value(std::move(v))) {}
+    
+  void swap_impl(member_storage& rhs)
+  {
+    using namespace std;
+    swap(value_, rhs.value_);
+  }
 };
 
 template <typename EVP>
@@ -263,7 +259,7 @@ public:
       }
     }
     
-  void swap(buffer_storage& rhs)
+  void swap_impl(buffer_storage& rhs)
   {
     using namespace std;
     if (has_value() && rhs.has_value())
@@ -293,25 +289,23 @@ public:
 template <typename T>
 struct storage_destruction
 {
-  typedef member_storage<T> type;
-};
 
-template <typename U>
-struct storage_destruction<evp_raw_storage<U>>
-{
-  typedef buffer_storage<evp_raw_storage<U>> type;
+  typedef typename std::conditional<std::is_base_of<compact_optional_raw_storage_type_tag, T>::value,
+                                    buffer_storage<T>, 
+                                    member_storage<T>>::type type;
 };
-
 
 template <typename N>
 class compact_optional_base : storage_destruction<N>::type
 {
   typedef typename storage_destruction<N>::type base;
+  base& as_base() { return static_cast<base&>(*this); }
   
 protected:
   typedef typename N::value_type value_type;
   typedef typename N::storage_type storage_type;
   typedef typename N::reference_type reference_type;
+  void swap_storages(compact_optional_base& rhs) { as_base().swap_impl(rhs.as_base()); }
   
   AK_TOOLBOX_CONSTEXPR_NOCONST storage_type& raw_value() { return base::value_; }
   
@@ -356,8 +350,7 @@ public:
 
   friend void swap(compact_optional& l, compact_optional&r)
   {
-    using std::swap;
-    swap (l.raw_value(), r.raw_value());
+    l.swap_storages(r);
   }
 };
 
@@ -366,6 +359,7 @@ public:
 using compact_optional_ns::compact_optional;
 using compact_optional_ns::empty_scalar_value;
 using compact_optional_ns::compact_optional_type;
+using compact_optional_ns::compact_optional_raw_storage_type;
 using compact_optional_ns::compact_optional_from_optional;
 using compact_optional_ns::compact_bool;
 using compact_optional_ns::evp_bool;
@@ -374,8 +368,6 @@ using compact_optional_ns::evp_fp_nan;
 using compact_optional_ns::evp_value_init;
 using compact_optional_ns::evp_optional;
 using compact_optional_ns::evp_stl_empty;
-using compact_optional_ns::evp_raw_storage;
-
 
 } // namespace ak_toolbox
 
