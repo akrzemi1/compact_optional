@@ -4,10 +4,14 @@
 // License, Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 
+#include <iostream>
+#define PR(x) std::cout << x << std::endl
 #include "compact_optional.hpp"
 #include <cassert>
 #include <utility>
 #include <string>
+
+
 
 #if defined AK_TOOLBOX_USING_BOOST
 #include <boost/optional.hpp>
@@ -226,74 +230,107 @@ void test_evp_stl_empty()
   }
 }
 
-#if !defined AK_TOOLBOX_NO_ARVANCED_CXX11
-
-
-
 class minutes_since_midnight
 {
   int minutes_;
   
 public:
   bool invariant() const { return minutes_ >= 0 && minutes_ < 24 * 60; }
-  explicit minutes_since_midnight(int minutes) : minutes_(minutes) { assert (invariant()); ++objects_created; } 
-  minutes_since_midnight(minutes_since_midnight const& rhs) : minutes_(rhs.minutes_) { ++objects_created; }
-  int as_int() const { assert (invariant()); return minutes_; }
+  
+  explicit minutes_since_midnight(int minutes) 
+  : minutes_(minutes) 
+  {
+    assert (invariant());
+    ++objects_created;
+  } 
+  
+  minutes_since_midnight(minutes_since_midnight const& rhs)
+  : minutes_(rhs.minutes_)
+  {
+    assert (invariant());
+    assert (rhs.invariant());
+    ++objects_created;
+  }
+  
+  int as_int() const
+  {
+    assert (invariant());
+    return minutes_;
+  }
   
   friend bool operator==(const minutes_since_midnight& l, const minutes_since_midnight& r)
   {
     return l.minutes_ == r.minutes_;
   }
   
-  ~minutes_since_midnight() { ++objects_destroyed; }
+  ~minutes_since_midnight()
+  {
+    assert (invariant());
+    ++objects_destroyed;
+  }
 };
 
-namespace ak_toolbox { namespace compact_optional_ns {
-
-template <>
-struct raw_storage_customization_point<minutes_since_midnight>
+struct evp_minutes_since_midnight : compact_optional_type< minutes_since_midnight, int >
 {
-  typedef std::aligned_storage<sizeof(int), alignof(int)>::type storage_type;
-  static storage_type empty_value() { storage_type ans {}; reinterpret_cast<int&>(ans) = -1; return ans; }
-  static bool is_empty_value(const storage_type& v) { return reinterpret_cast<const int&>(v) == -1; }
+  static_assert(sizeof(minutes_since_midnight) == sizeof(int), "Bad size");
+  
+  static storage_type empty_value() { return -1; }
+  static bool is_empty_value(const storage_type& v) { return v == -1; }
+  
+  static const value_type& access_value(const storage_type& v) { return reinterpret_cast<const value_type&>(v); }
+  static const storage_type& store_value(const value_type& v) { return reinterpret_cast<const storage_type&>(v); }
+  static storage_type store_value(value_type&& v) { return reinterpret_cast<const storage_type&>(v); }
 };
 
-}}
+
+struct evp_minutes : compact_optional_raw_storage_type<minutes_since_midnight, int>
+{
+  static storage_type empty_value() { return -1; }
+  static bool is_empty_value(const storage_type& v) { return v == -1; }
+};
 
 void test_evp_raw_storage()
 {
   reset_globals();
   {
-    typedef compact_optional<evp_raw_storage<minutes_since_midnight>> opt_time;
-    opt_time ot_, ot0 (minutes_since_midnight(0)), otM(minutes_since_midnight(1439));
+    typedef compact_optional<evp_minutes> opt_time;
+    const minutes_since_midnight t0(0), tM(1439);
+    opt_time ot_, ot0 (t0), otM(tM);
     assert (!ot_.has_value());
     assert ( ot0.has_value());
     assert ( otM.has_value());
+    assert(objects_created == 4);
     
-    assert (ot0.value() == minutes_since_midnight(0));
-    assert (otM.value() == minutes_since_midnight(1439));
+    assert (ot0.value() == t0);
+    assert (otM.value() == tM);
     
     opt_time otM2 = otM;
     assert (otM.has_value());
-    assert (otM.value() == minutes_since_midnight(1439));
-    assert (otM.value().as_int() == 1439);
+    assert (otM.value() == tM);
+    assert(objects_created == 5);
     
     ot_ = otM2;
     assert (ot_.has_value());
-    assert (ot_.value() == minutes_since_midnight(1439));
+    assert (ot_.value().as_int() == 1439);
+    assert(objects_created == 6);
+    assert(objects_destroyed == 0);
     
     ot_ = {};
     assert (!ot_.has_value());
     assert ( otM.has_value());
+    assert(objects_created == 6);
+    assert(objects_destroyed == 1);
     
     swap(ot_, otM);
     assert ( ot_.has_value());
     assert (!otM.has_value());
-    assert (ot_.value() == minutes_since_midnight(1439));
+    assert (ot_.value().as_int() == 1439);
+    assert(objects_created == 7);
+    assert(objects_destroyed == 2);
   }
   assert(objects_created == objects_destroyed);
 }
-# endif
+
 
 #if defined AK_TOOLBOX_USING_BOOST
 void test_optional_as_storage()
@@ -320,11 +357,8 @@ int main()
   test_evp_fp_nan();
   test_evp_value_init();
   test_evp_stl_empty();
+  test_evp_raw_storage();
 #if defined AK_TOOLBOX_USING_BOOST
   test_optional_as_storage();
 #endif
-
-#if !defined AK_TOOLBOX_NO_ARVANCED_CXX11
-  test_evp_raw_storage();
-# endif
 }
