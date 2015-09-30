@@ -87,7 +87,7 @@ template <typename FPT> struct evp_fp_nan;
 
 A policy for floating-point types, where the empty value is encoded as quiet NaN.
 
-`FPT` Needs to be a floating-point scalar type.
+`FPT` needs to be a floating-point scalar type.
 
 ### evp_value_init
 
@@ -97,7 +97,18 @@ template <typename T> struct evp_value_init;
 
 A policy for storing any `Regular` type, the empty value is represented by a value-initialized `T`.
 
-`T` Must meet the requirements of `Regular`: be default constructible, copyable, moveable, and `EqualityComparable`.
+`T` must meet the requirements of `Regular`: be default constructible, copyable, moveable, and `EqualityComparable`.
+
+### evp_stl_empty
+
+```c++
+template <typename Cont> struct evp_stl_empty;
+```
+
+Empty value is created using value initialization. Empty value is checked by calling member function `empty()`. Useful for STL containers where we want the empty container to represent the no-value.
+
+`T` must be default constructible and have a member function `empty()`.
+
 
 ### evp_bool
 
@@ -160,6 +171,49 @@ The three types passed to `compact_optional_type` denote respectively:
 
 because function `value()` should return a `bool`  and we are storing no `bool` we have to create a temporary value, and return it by value: therefore type `reference_type` is not really a reference.
 
+
+### Using POD storage for empty value
+
+Sometimes there is no spare value of `T`, but there is a spare sequence of bits in `POD<T>`, where `POD<T>` is a raw-memory representation of `T` (i.e., its local part -- the part that amounts to `sizeof(T)`). Consider the following type:
+
+```
+class minutes_since_midnight
+{
+  int min_;
+  
+public:
+  bool invariant() const { return min_ >= 0 && min_ < 24 * 60; }
+  
+  explicit minutes_since_midnight(int m) : min_(m) 
+  { 
+    assert (invariant());
+  }
+  
+  int as_int() const
+  {
+    assert (invariant());
+    return min_;
+  }
+  
+  ~minutes_since_midnight()
+  {
+    assert (invariant());
+  }
+};
+```
+
+Member subobject `min_` is expected to range from 0 (inclusive) to 1440 (exclusive). This leaves many spare values, e.g., -1. But if we try to use them, we violate the invariant, and trigger assertion failure. In such case, `compact_optional` allows you to use a POD type `int` for storage and only reinterpret it as `minutes_since_midnight` upon extracting the value. Of course, the wrapper deals with manual life-time management issues internally, calling in-place `new` and pseudo destructor calls where necessary. In order to use that functionality, you have to create an empty value policy that derives from `compact_optional_pod_storage_type`:
+
+```
+struct evp_minutes : compact_optional_pod_storage_type<minutes_since_midnight, int>
+{
+  static storage_type empty_value() { return -1; }
+  static bool is_empty_value(const storage_type& v) { return v == -1; }
+};
+```
+
+The first argument is the type we want to represent; the second type (`int`) is the POD type, layout-compatible with `T` (the first argument). If it is not provided, the implementation uses `std::aligned_storage_t<sizeof(T), alignof(T)>`. the two functions `empty_value` and `is_empty_value` describe the empty value on the POD type, where no invariant is enforced.
+
 ## Type-altering tag
 
 It is possible to pass a second type parameter to class template `compact_optional`.
@@ -204,3 +258,7 @@ Some type `T` may not have a 'spare' value to indicate the empty state. In such 
 In general, it is expected that in the first pass of the implementation of your program, you will use `boost::optional<T>` as a simple ready-to-use solution. Later, if you determine that `boost::optional` kills your performance, you can think of replacing it with `compact_optional` and how you want to represent the no-value state.
 
 another use case is when you are currently using objects of scalar types with encoded special values (like type `std::string::size_type` with value `std::string::npos`) and you want to change it into something safer but be sure you are adding no runtime overhead. You can change your type to `compact_optional<evp_int<string::size_type, string::npos>>`.
+
+## Future plans
+
+Provide relational operations upon request.
