@@ -11,6 +11,7 @@
 #include <utility>
 #include <limits>
 #include <new>
+#  include <type_traits>
 
 #if defined AK_TOOLBOX_NO_ARVANCED_CXX11
 #  define AK_TOOLBOX_NOEXCEPT
@@ -23,7 +24,6 @@
 #  define AK_TOOLBOX_EXPLICIT_CONV explicit 
 #  define AK_TOOLBOX_NOEXCEPT_AS(E) noexcept(noexcept(E))
 #  define AK_TOOLBOX_CONSTEXPR_NOCONST // fix in the future
-#  include <type_traits>
 #endif
 
 #if defined NDEBUG
@@ -141,20 +141,21 @@ typedef evp_bool compact_bool;
 struct compact_optional_pod_storage_type_tag{};
 
 #ifndef AK_TOOLBOX_NO_ARVANCED_CXX11
-template <typename T, typename S = typename std::aligned_storage<sizeof(T), alignof(T)>::type>
+template <typename T, typename POD_T = typename std::aligned_storage<sizeof(T), alignof(T)>::type>
 #else
-template <typename T, typename S>
+template <typename T, typename POD_T>
 #endif // AK_TOOLBOX_NO_ARVANCED_CXX11
 
 struct compact_optional_pod_storage_type : compact_optional_pod_storage_type_tag
 {
-  static_assert(sizeof(T) == sizeof(S), "pod storage for T has to have the same size and alignment as T");
+  static_assert(sizeof(T) == sizeof(POD_T), "pod storage for T has to have the same size and alignment as T");
+  static_assert(std::is_pod<POD_T>::value, "second argument must be a POD type");
 #ifndef AK_TOOLBOX_NO_ARVANCED_CXX11
-  static_assert(alignof(T) == alignof(S), "pod storage for T has to have the same alignment as T");
+  static_assert(alignof(T) == alignof(POD_T), "pod storage for T has to have the same alignment as T");
 #endif // AK_TOOLBOX_NO_ARVANCED_CXX11
 
   typedef T value_type;
-  typedef S storage_type;
+  typedef POD_T storage_type;
   typedef const T& reference_type;
   
   static const value_type& access_value(const storage_type& s) { return reinterpret_cast<const value_type&>(s); }
