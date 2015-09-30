@@ -67,5 +67,7 @@ For additional motivation and overview see this post: https://akrzemi1.wordpress
 
 The idea of encoding the policy for determining the empty state in a template parameter has been proposed by Vitali Lovich (see https://groups.google.com/a/isocpp.org/d/topic/std-proposals/46J1onhWJ-s/discussion).
 
+Matt Calabrese and Tomasz Kami&#324;ski suggested the raw-storage representation for holding optional types with strong invariants.
+
 ## License
 Distributed under the [Boost Software License, Version 1.0](http://www.boost.org/LICENSE_1_0.txt).
