@@ -138,7 +138,7 @@ struct evp_bool : compact_optional_type<bool, char, bool>
 typedef evp_bool compact_bool;
 
 
-struct compact_optional_raw_storage_type_tag{};
+struct compact_optional_pod_storage_type_tag{};
 
 #ifndef AK_TOOLBOX_NO_ARVANCED_CXX11
 template <typename T, typename S = typename std::aligned_storage<sizeof(T), alignof(T)>::type>
@@ -146,7 +146,7 @@ template <typename T, typename S = typename std::aligned_storage<sizeof(T), alig
 template <typename T, typename S>
 #endif // AK_TOOLBOX_NO_ARVANCED_CXX11
 
-struct compact_optional_raw_storage_type : compact_optional_raw_storage_type_tag
+struct compact_optional_pod_storage_type : compact_optional_pod_storage_type_tag
 {
   typedef T value_type;
   typedef S storage_type;
@@ -290,7 +290,7 @@ template <typename T>
 struct storage_destruction
 {
 
-  typedef typename std::conditional<std::is_base_of<compact_optional_raw_storage_type_tag, T>::value,
+  typedef typename std::conditional<std::is_base_of<compact_optional_pod_storage_type_tag, T>::value,
                                     buffer_storage<T>, 
                                     member_storage<T>>::type type;
 };
@@ -359,7 +359,7 @@ public:
 using compact_optional_ns::compact_optional;
 using compact_optional_ns::empty_scalar_value;
 using compact_optional_ns::compact_optional_type;
-using compact_optional_ns::compact_optional_raw_storage_type;
+using compact_optional_ns::compact_optional_pod_storage_type;
 using compact_optional_ns::compact_optional_from_optional;
 using compact_optional_ns::compact_bool;
 using compact_optional_ns::evp_bool;
