@@ -212,7 +212,7 @@ struct evp_minutes : compact_optional_pod_storage_type<minutes_since_midnight, i
 };
 ```
 
-The first argument is the type we want to represent; the second type (`int`) is the POD type, layout-compatible with `T` (the first argument). If it is not provided, the implementation uses `std::aligned_storage_t<sizeof(T), alignof(T)>`. the two functions `empty_value` and `is_empty_value` describe the empty value on the POD type, where no invariant is enforced.
+The first argument is the type we want to represent; the second type (`int`) is the POD type, of the same size and alignment as `T` (the first argument). If it is not provided, the implementation uses `std::aligned_storage_t<sizeof(T), alignof(T)>`. the two functions `empty_value` and `is_empty_value` describe the empty value on the POD type, where no invariant is enforced.
 
 ## Type-altering tag
 
