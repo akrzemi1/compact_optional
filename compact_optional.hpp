@@ -162,7 +162,7 @@ struct compact_optional_pod_storage_type : compact_optional_pod_storage_type_tag
   static const storage_type& store_value(const value_type& v) { return reinterpret_cast<const storage_type&>(v); }  
 };
 
-#ifndef AK_TOOLBOX_NO_ARVANCED_CXX11
+#ifndef AK_TOOLBOX_NO_UNDERLYING_TYPE
 template <typename Enum, typename std::underlying_type<Enum>::type Val> 
 struct evp_enum : compact_optional_pod_storage_type<Enum, typename std::underlying_type<Enum>::type>
 {
@@ -172,7 +172,7 @@ struct evp_enum : compact_optional_pod_storage_type<Enum, typename std::underlyi
   static storage_type empty_value() { return Val; }
   static bool is_empty_value(const storage_type& v) { return v == Val; }
 };
-#endif // AK_TOOLBOX_NO_ARVANCED_CXX11
+#endif // AK_TOOLBOX_NO_UNDERLYING_TYPE
 
 namespace detail_ {
 
@@ -384,7 +384,9 @@ using compact_optional_ns::evp_fp_nan;
 using compact_optional_ns::evp_value_init;
 using compact_optional_ns::evp_optional;
 using compact_optional_ns::evp_stl_empty;
+#ifndef AK_TOOLBOX_NO_UNDERLYING_TYPE
 using compact_optional_ns::evp_enum;
+#endif
 
 } // namespace ak_toolbox
 
