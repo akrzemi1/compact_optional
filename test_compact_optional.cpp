@@ -4,8 +4,6 @@
 // License, Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 
-#include <iostream>
-#define PR(x) std::cout << x << std::endl
 #include "compact_optional.hpp"
 #include <cassert>
 #include <utility>
@@ -269,19 +267,6 @@ public:
     ++objects_destroyed;
   }
 };
-
-struct evp_minutes_since_midnight : compact_optional_type< minutes_since_midnight, int >
-{
-  static_assert(sizeof(minutes_since_midnight) == sizeof(int), "Bad size");
-  
-  static storage_type empty_value() { return -1; }
-  static bool is_empty_value(const storage_type& v) { return v == -1; }
-  
-  static const value_type& access_value(const storage_type& v) { return reinterpret_cast<const value_type&>(v); }
-  static const storage_type& store_value(const value_type& v) { return reinterpret_cast<const storage_type&>(v); }
-  static storage_type store_value(value_type&& v) { return reinterpret_cast<const storage_type&>(v); }
-};
-
 
 struct evp_minutes : compact_optional_pod_storage_type<minutes_since_midnight, int>
 {
