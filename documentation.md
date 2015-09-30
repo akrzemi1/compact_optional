@@ -118,6 +118,15 @@ struct evp_bool;
 
 This is the policy for storing an optional `bool` in a compact way, such that the size of `compact_optional<evp_bool>` is 1.
 
+### evp_enum
+```c++
+template <typename Enum, std::underlying_type_t<Enum> Val> struct evp_enum;
+```
+
+A policy for storing any enum, the empty value is represented by the indicated integral value `Val`, which can be outside the range of valid enum values.
+
+`Enum` must be an enumeration type.
+
 ### evp_optional
 
 ```c++
