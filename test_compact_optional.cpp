@@ -316,7 +316,6 @@ void test_evp_raw_storage()
   assert(objects_created == objects_destroyed);
 }
 
-#ifndef AK_TOOLBOX_NO_UNDERLYING_TYPE
 enum class Dir { N, E, S, W };
 
 void test_evp_enum()
@@ -335,7 +334,6 @@ void test_evp_enum()
   assert (oN.unsafe_raw_value() ==  0);
   assert (oW.unsafe_raw_value() ==  3);
 }
-#endif
 
 #if defined AK_TOOLBOX_USING_BOOST
 void test_optional_as_storage()
@@ -366,7 +364,5 @@ int main()
 #if defined AK_TOOLBOX_USING_BOOST
   test_optional_as_storage();
 #endif
-#ifndef AK_TOOLBOX_NO_UNDERLYING_TYPE
   test_evp_enum();
-#endif
 }
