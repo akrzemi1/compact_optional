@@ -316,6 +316,26 @@ void test_evp_raw_storage()
   assert(objects_created == objects_destroyed);
 }
 
+#ifndef AK_TOOLBOX_NO_ARVANCED_CXX11
+enum class Dir { N, E, S, W };
+
+void test_evp_enum()
+{
+  typedef compact_optional<evp_enum<Dir, -1>> opt_dir;
+  opt_dir o_, oN(Dir::N), oW(Dir::W);
+  
+  assert (!o_.has_value());
+  assert ( oN.has_value());
+  assert ( oW.has_value());
+  
+  assert (oN.value() == Dir::N);
+  assert (oW.value() == Dir::W);
+  
+  assert (o_.unsafe_raw_value() == -1);
+  assert (oN.unsafe_raw_value() ==  0);
+  assert (oW.unsafe_raw_value() ==  3);
+}
+#endif
 
 #if defined AK_TOOLBOX_USING_BOOST
 void test_optional_as_storage()
@@ -345,5 +365,8 @@ int main()
   test_evp_raw_storage();
 #if defined AK_TOOLBOX_USING_BOOST
   test_optional_as_storage();
+#endif
+#ifndef AK_TOOLBOX_NO_ARVANCED_CXX11
+  test_evp_enum();
 #endif
 }
