@@ -148,6 +148,11 @@ template <typename T, typename S>
 
 struct compact_optional_pod_storage_type : compact_optional_pod_storage_type_tag
 {
+  static_assert(sizeof(T) == sizeof(S), "pod storage for T has to have the same size and alignment as T");
+#ifndef AK_TOOLBOX_NO_ARVANCED_CXX11
+  static_assert(alignof(T) == alignof(S), "pod storage for T has to have the same alignment as T");
+#endif // AK_TOOLBOX_NO_ARVANCED_CXX11
+
   typedef T value_type;
   typedef S storage_type;
   typedef const T& reference_type;
