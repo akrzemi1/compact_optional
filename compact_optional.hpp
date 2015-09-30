@@ -166,7 +166,18 @@ struct compact_optional_pod_storage_type : compact_optional_pod_storage_type_tag
 template <typename Enum, typename std::underlying_type<Enum>::type Val> 
 struct evp_enum : compact_optional_pod_storage_type<Enum, typename std::underlying_type<Enum>::type>
 {
+  static_assert(std::is_enum<Enum>::value, "evp_enum only works with enum types");
   typedef compact_optional_pod_storage_type<Enum, typename std::underlying_type<Enum>::type> base;
+  typedef typename base::storage_type storage_type;
+  
+  static storage_type empty_value() { return Val; }
+  static bool is_empty_value(const storage_type& v) { return v == Val; }
+};
+#else
+template <typename Enum, int Val> 
+struct evp_enum : compact_optional_pod_storage_type<Enum, int>
+{
+  typedef compact_optional_pod_storage_type<Enum, int> base;
   typedef typename base::storage_type storage_type;
   
   static storage_type empty_value() { return Val; }
@@ -384,9 +395,7 @@ using compact_optional_ns::evp_fp_nan;
 using compact_optional_ns::evp_value_init;
 using compact_optional_ns::evp_optional;
 using compact_optional_ns::evp_stl_empty;
-#ifndef AK_TOOLBOX_NO_UNDERLYING_TYPE
 using compact_optional_ns::evp_enum;
-#endif
 
 } // namespace ak_toolbox
 
