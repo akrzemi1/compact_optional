@@ -176,7 +176,7 @@ because function `value()` should return a `bool`  and we are storing no `bool` 
 
 Sometimes there is no spare value of `T`, but there is a spare sequence of bits in `POD<T>`, where `POD<T>` is a raw-memory representation of `T` (i.e., its local part -- the part that amounts to `sizeof(T)`). Consider the following type:
 
-```
+```c++
 class minutes_since_midnight
 {
   int min_;
@@ -204,7 +204,7 @@ public:
 
 Member subobject `min_` is expected to range from 0 (inclusive) to 1440 (exclusive). This leaves many spare values, e.g., -1. But if we try to use them, we violate the invariant, and trigger assertion failure. In such case, `compact_optional` allows you to use a POD type `int` for storage and only reinterpret it as `minutes_since_midnight` upon extracting the value. Of course, the wrapper deals with manual life-time management issues internally, calling in-place `new` and pseudo destructor calls where necessary. In order to use that functionality, you have to create an empty value policy that derives from `compact_optional_pod_storage_type`:
 
-```
+```c++
 struct evp_minutes : compact_optional_pod_storage_type<minutes_since_midnight, int>
 {
   static storage_type empty_value() { return -1; }
