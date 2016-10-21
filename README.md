@@ -47,7 +47,7 @@ assert (oE.value() == "");
 static_assert (sizeof(opt_str) == sizeof(std::string), "");
 ```
 
-Cannot spare any value, but still want to use this interface? You can use `boost::opitonal` or `std::experimental::optional` at the cost of storage size:
+Cannot spare any value, but still want to use this interface? You can use `boost::optional` or `std::experimental::optional` at the cost of storage size:
 
 ```c++
 typedef compact_optional<evp_optional<boost::optional<int>>> opt_int;
@@ -63,7 +63,7 @@ static_assert (sizeof(opt_bool) == 1, "");
 
 For additional motivation and overview see this post: https://akrzemi1.wordpress.com/2015/07/15/efficient-optional-values/.
 
-## Acknowledgemens
+## Acknowledgments
 
 The idea of encoding the policy for determining the empty state in a template parameter has been proposed by Vitali Lovich (see https://groups.google.com/a/isocpp.org/d/topic/std-proposals/46J1onhWJ-s/discussion).
 
