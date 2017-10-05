@@ -1,4 +1,7 @@
 # compact_optional [![Build Status](https://travis-ci.org/akrzemi1/compact_optional.svg?branch=master)](https://travis-ci.org/akrzemi1/compact_optional)
+
+**WARNING:** This library is not maintained, and deprecated. It is recommended that you use [`markable`](https://github.com/akrzemi1/markable) instead.
+
 An alternative to `boost::optional<T>` which does not store an additional `bool` flag,
 but encodes the empty state inside `T` using a special indicated value.
 
